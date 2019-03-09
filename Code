@@ -1,0 +1,79 @@
+import csv
+import collections
+import numpy as np
+
+#Function untuk membaca Trainset CSV
+def ReadDataTrain():
+    with open('TrainsetTugas1ML.csv') as file:
+        reader = csv.reader(file, delimiter=',')
+        #Membaca data dibawah header
+        next(reader)
+        data = []
+        for row in reader:
+            data.append(row[1:])
+        return data
+
+#Function untuk membaca Data set CSV
+def ReadDataTest():
+    with open('TestsetTugas1ML.csv') as file:
+        reader = csv.reader(file, delimiter=',')
+        #Membaca data dibawah header
+        next(reader)
+        data = []
+        for row in reader:
+            data.append(row[1:7])
+        return data
+
+#Function untuk membedakan yang memnyaring yang memiliki income >50k dan <=50k
+def filterDataTrain(data):
+    more50k = []
+    less50k = []
+    for x in data:
+        if(x[7] == '>50K'):
+            more50k.append(x)
+        else:
+            less50k.append(x)
+    return more50k, less50k
+
+#Function menghitung probabilitas 
+def probability(x):
+    p = np.transpose(x)
+    h = []
+    for i in p[:7]:
+        c = collections.Counter(i)
+        for z in c:
+            c[z] = c[z] / len(x)
+        h.append(c)
+    return h
+
+
+dTrain = ReadDataTrain()
+dTest = ReadDataTest()
+more50k, less50k = filterDataTrain(dTrain)
+pMore = len(more50k)/len(dTrain)
+pLess = len(less50k)/len(dTrain)
+
+#mencari peluan yang memiliki income >50K
+pMayor = probability(more50k)
+#mencari peluang yang memiliki income < 50k
+pMinor = probability(less50k)
+hasil = []
+#Mengeluarkan hasil kedalam Bentuk CSV
+with open('TebakanTugas1ML.csv','w',newline='') as data:
+        fieldnames=['Hasil']
+        thewriter=csv.DictWriter(data,fieldnames=fieldnames)
+
+        thewriter.writeheader()
+        for i in dTest:
+            more = pMore
+            less = pLess
+            for y in range(0, 6):
+                more = more * pMayor[y][i[y]]
+                less = less * pMinor[y][i[y]]
+            if(more > less):
+                hasil.append('>50K')
+            else:
+                hasil.append('<=50K')
+        for hasil in hasil:
+                thewriter.writerow({'Hasil':hasil})
+
